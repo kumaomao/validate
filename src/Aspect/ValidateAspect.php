@@ -30,13 +30,13 @@ class ValidateAspect extends AbstractAspect
         foreach ($proceedingJoinPoint->getAnnotationMetadata()->method as $validateMethod){
             if($validateMethod instanceof Validate){
                 if(!$validateMethod->validate){
-                    throw new ValidateException('validate 不能为空');
+                    throw new ValidateException(500,'validate 不能为空');
                 }
                 if(class_exists($validateMethod->validate)){
                     //实例化验证方法
                     $validate = new $validateMethod->validate;
                 }else{
-                    throw new ValidateException($validateMethod->validate.'不存在');
+                    throw new ValidateException(500,$validateMethod->validate.'不存在');
                 }
 
                 if ($validateMethod->scene) {
@@ -48,7 +48,7 @@ class ValidateAspect extends AbstractAspect
                 if ($validate->batch($validateMethod->batch)->check($data) === false) {
                     //检测是否抛出异常
                     if($validateMethod->throws){
-                        throw new ValidateException($validate->getError());
+                        throw new ValidateException(406,$validate->getError());
                     }else{
                         //错误信息写入请求
                         Context::override(ServerRequestInterface::class, function (ServerRequestInterface $request) use ($validate) {

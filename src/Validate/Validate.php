@@ -2,7 +2,9 @@
 namespace Kumaomao\Validate\Validate;
 
 
+use Hyperf\Contract\TranslatorInterface;
 use Hyperf\DbConnection\Db;
+use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Str;
 use Kumaomao\Validate\Exception\ValidateException;
 use Kumaomao\Validate\Validate\ValidateRule;
@@ -12,6 +14,7 @@ use Kumaomao\Validate\Validate\ValidateRule;
  */
 class Validate
 {
+
     /**
      * 自定义验证类型
      * @var array
@@ -99,6 +102,7 @@ class Validate
         'fileSize'    => 'filesize not match',
         'fileExt'     => 'extensions to upload is not allowed',
         'fileMime'    => 'mimetype to upload is not allowed',
+        'not_rules'   => 'not conform to the rules'
     ];
 
     /**
@@ -208,6 +212,9 @@ class Validate
      */
     protected static $maker = [];
 
+    protected  $translator;
+    protected  $container;
+
     /**
      * 构造方法
      * @access public
@@ -219,6 +226,8 @@ class Validate
                 call_user_func($maker, $this);
             }
         }
+
+
     }
 
     /**
@@ -1551,6 +1560,7 @@ class Validate
      */
     protected function getRuleMsg(string $attribute, string $title, string $type, $rule)
     {
+
         if (isset($this->message[$attribute . '.' . $type])) {
             $msg = $this->message[$attribute . '.' . $type];
         } elseif (isset($this->message[$attribute][$type])) {
@@ -1558,11 +1568,11 @@ class Validate
         } elseif (isset($this->message[$attribute])) {
             $msg = $this->message[$attribute];
         } elseif (isset($this->typeMsg[$type])) {
-            $msg = $this->typeMsg[$type];
+            $msg = $this->translator($type);
         } elseif (0 === strpos($type, 'require')) {
-            $msg = $this->typeMsg['require'];
+            $msg = $this->translator('require');
         } else {
-            $msg = $title . $this->lang->get('not conform to the rules');
+            $msg = $title . $this->translator('not_rules');
         }
 
         if (is_array($msg)) {
@@ -1570,6 +1580,22 @@ class Validate
         }
 
         return $this->parseErrorMsg($msg, $rule, $title);
+    }
+
+    private function translator($type){
+        $translator = false;
+        $lang = 'validation.'.$type;
+        try{
+            $container = ApplicationContext::getContainer();
+            $translator = container()->get(TranslatorInterface::class);
+        }catch (\Exception $e){
+            //错误不做处理
+        }
+        if($translator){
+            //存在多语言文件
+            $lang = $translator->trans($lang);
+        }
+        return  $lang == 'validation.'.$type?$this->typeMsg[$type]:$lang;
     }
 
     /**
