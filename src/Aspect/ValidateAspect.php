@@ -62,11 +62,11 @@ class ValidateAspect extends AbstractAspect
                 if(empty($validate->getError()) && $validateMethod->filter){
                     $rules = $validate->getSceneRule($validateMethod->scene);
                     $new_data = [];
-                    foreach ($rules as $key => $value) {
+                    foreach ($rules as $key) {
                         if(strstr($key, '|')){
                             $key = explode('|',$key)[0];
                         }
-                        if(isset( $data[$key])){
+                        if(isset($data[$key])){
                             $new_data[$key] = $data[$key];
                         }
                     }
