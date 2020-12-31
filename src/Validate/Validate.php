@@ -1679,7 +1679,7 @@ class Validate
 
     public function getSceneRule(string $name)
     {
-        return $this->scene[$name] ?? $this->rule;
+         return $name? $this->only:$this->rule;
     }
 
     /**
