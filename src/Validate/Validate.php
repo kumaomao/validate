@@ -1122,17 +1122,17 @@ class Validate
         if (is_string($rule)) {
             $rule = explode(',', $rule);
         }
-
+        $keyName = 'id';
         if (false !== strpos($rule[0], '\\')) {
             // 指定模型类
             $db = new $rule[0];
+            $keyName = $db->getKeyName();
         } else {
-            $db = $this->db->name($rule[0]);
+            $db =  Db::table($rule[0]);
         }
-
         $key = $rule[1] ?? $field;
         $map = [];
-
+        //
         if (strpos($key, '^')) {
             // 支持多个字段验证
             $fields = explode('^', $key);
@@ -1146,9 +1146,7 @@ class Validate
         } else {
             $map = [];
         }
-
-        $pk = !empty($rule[3]) ? $rule[3] : $db->getPk();
-
+        $pk = !empty($rule[3]) ? $rule[3] : $keyName;
         if (is_string($pk)) {
             if (isset($rule[2])) {
                 $map[] = [$pk, '<>', $rule[2]];
@@ -1156,11 +1154,9 @@ class Validate
                 $map[] = [$pk, '<>', $data[$pk]];
             }
         }
-
-        if ($db->where($map)->field($pk)->find()) {
+        if ($db->where($map)->select($pk)->first()) {
             return false;
         }
-
         return true;
     }
 
@@ -1668,7 +1664,6 @@ class Validate
     protected function getScene(string $scene): void
     {
         $this->only = $this->append = $this->remove = [];
-
         if (method_exists($this, 'scene' . $scene)) {
             call_user_func([$this, 'scene' . $scene]);
         } elseif (isset($this->scene[$scene])) {
@@ -1679,7 +1674,7 @@ class Validate
 
     public function getSceneRule(string $name)
     {
-         return $name? $this->only:$this->rule;
+        return $name? $this->only:$this->rule;
     }
 
     /**
